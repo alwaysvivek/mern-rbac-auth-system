@@ -47,8 +47,8 @@
 
   .floating-input {
     @apply w-full px-4 py-3 text-sm border border-surface-border rounded-xl bg-white
-           outline-none transition-all duration-200 peer
-           focus:border-accent focus:ring-2 focus:ring-accent/20;
+           outline-none transition-all duration-200
+           focus:border-accent focus:ring-2 focus:ring-accent-light;
   }
 
   .floating-label {

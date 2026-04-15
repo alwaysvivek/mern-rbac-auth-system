@@ -14,7 +14,7 @@ const Input = forwardRef(({
           id={id}
           ref={ref}
           placeholder=" "
-          className={`floating-input ${error ? 'border-status-suspended focus:border-status-suspended focus:ring-status-suspended/20' : ''}`}
+          className={`floating-input peer ${error ? 'border-status-suspended focus:border-status-suspended focus:ring-status-suspended/20' : ''}`}
           {...props}
         />
         <label htmlFor={id} className="floating-label">
