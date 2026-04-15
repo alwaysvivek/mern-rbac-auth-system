@@ -8,14 +8,7 @@ const config = require('../config/env');
  */
 const protect = async (req, res, next) => {
   try {
-    let token;
-
-    if (
-      req.headers.authorization &&
-      req.headers.authorization.startsWith('Bearer')
-    ) {
-      token = req.headers.authorization.split(' ')[1];
-    }
+    const token = req.cookies.accessToken;
 
     if (!token) {
       throw new AppError('Not authorized — no token provided', 401);
