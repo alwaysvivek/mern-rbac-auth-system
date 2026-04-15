@@ -8,10 +8,26 @@ const authService = require('../services/authService');
 const register = async (req, res, next) => {
   try {
     const result = await authService.register(req.body);
+    const { accessToken, refreshToken, user } = result;
+
+    res.cookie('accessToken', accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 15 * 60 * 1000 // 15 mins
+    });
+
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    });
+
     res.status(201).json({
       success: true,
       message: 'User registered successfully',
-      data: result,
+      data: { user },
     });
   } catch (error) {
     next(error);
@@ -26,10 +42,26 @@ const register = async (req, res, next) => {
 const login = async (req, res, next) => {
   try {
     const result = await authService.login(req.body);
+    const { accessToken, refreshToken, user } = result;
+
+    res.cookie('accessToken', accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 15 * 60 * 1000 // 15 mins
+    });
+
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    });
+
     res.status(200).json({
       success: true,
       message: 'Login successful',
-      data: result,
+      data: { user },
     });
   } catch (error) {
     next(error);
@@ -43,11 +75,20 @@ const login = async (req, res, next) => {
  */
 const refreshToken = async (req, res, next) => {
   try {
-    const { refreshToken: token } = req.body;
+    const token = req.cookies.refreshToken;
     const result = await authService.refreshAccessToken(token);
+    
+    // Only access token is regenerated in refreshAccessToken currently, but let's reset the cookie
+    res.cookie('accessToken', result.accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 15 * 60 * 1000 // 15 mins
+    });
+
     res.status(200).json({
       success: true,
-      data: result,
+      data: { user: result.user },
     });
   } catch (error) {
     next(error);
@@ -61,8 +102,12 @@ const refreshToken = async (req, res, next) => {
  */
 const logout = async (req, res, next) => {
   try {
-    const { refreshToken: token } = req.body;
+    const token = req.cookies.refreshToken;
     await authService.logout(token);
+    
+    res.clearCookie('accessToken');
+    res.clearCookie('refreshToken');
+
     res.status(200).json({
       success: true,
       message: 'Logged out successfully',

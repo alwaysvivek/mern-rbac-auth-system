@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const RefreshToken = require('../models/RefreshToken');
+const AuditLog = require('../models/AuditLog');
 const AppError = require('../utils/AppError');
 const { generateAccessToken, generateRefreshToken } = require('../utils/generateToken');
 const config = require('../config/env');
@@ -46,7 +47,14 @@ const login = async ({ email, password }) => {
 
   // Update last login
   user.lastLoginAt = new Date();
+  user.lastLoginAt = new Date();
   await user.save({ validateBeforeSave: false });
+
+  await AuditLog.create({
+    action: 'LOGIN',
+    entityId: user._id,
+    performedBy: user._id,
+  });
 
   const tokens = await generateTokens(user);
 
@@ -101,10 +109,17 @@ const refreshAccessToken = async (refreshTokenStr) => {
  */
 const logout = async (refreshTokenStr) => {
   if (refreshTokenStr) {
-    await RefreshToken.findOneAndUpdate(
+    const tokenDoc = await RefreshToken.findOneAndUpdate(
       { token: refreshTokenStr },
       { isRevoked: true }
     );
+    if (tokenDoc) {
+      await AuditLog.create({
+        action: 'LOGOUT',
+        entityId: tokenDoc.userId,
+        performedBy: tokenDoc.userId,
+      });
+    }
   }
 };
 

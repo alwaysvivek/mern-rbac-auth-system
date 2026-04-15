@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const AuditLog = require('../models/AuditLog');
 const AppError = require('../utils/AppError');
 const generatePassword = require('../utils/generatePassword');
 
@@ -91,6 +92,13 @@ const createUser = async (data, creatorId) => {
     updatedBy: creatorId,
   });
 
+  await AuditLog.create({
+    action: 'CREATE',
+    entityId: user._id,
+    performedBy: creatorId,
+    details: { email, role, status }
+  });
+
   return {
     user: user.toJSON(),
     generatedPassword: !password ? userPassword : undefined,
@@ -133,6 +141,13 @@ const updateUser = async (id, data, updaterId, updaterRole) => {
   user.updatedBy = updaterId;
   await user.save();
 
+  await AuditLog.create({
+    action: 'UPDATE',
+    entityId: user._id,
+    performedBy: updaterId,
+    details: { updatedFields: allowedFields.filter(f => data[f] !== undefined) }
+  });
+
   return user;
 };
 
@@ -151,10 +166,16 @@ const deleteUser = async (id, deleterId) => {
     throw new AppError('You cannot delete your own account', 400);
   }
 
-  // Soft delete: set status to inactive
   user.status = 'inactive';
   user.updatedBy = deleterId;
   await user.save();
+
+  await AuditLog.create({
+    action: 'DELETE',
+    entityId: user._id,
+    performedBy: deleterId,
+    details: { type: 'soft-delete' }
+  });
 
   return user;
 };
@@ -191,6 +212,13 @@ const updateProfile = async (userId, data) => {
 
   user.updatedBy = userId;
   await user.save();
+
+  await AuditLog.create({
+    action: 'UPDATE',
+    entityId: user._id,
+    performedBy: userId,
+    details: { type: 'self-update' }
+  });
 
   return user;
 };

@@ -1,4 +1,5 @@
 const AppError = require('../utils/AppError');
+const logger = require('../utils/logger');
 
 /**
  * Global error handler middleware
@@ -10,7 +11,7 @@ const errorHandler = (err, req, res, next) => {
 
   // Log error in development
   if (process.env.NODE_ENV === 'development') {
-    console.error('❌ Error:', err);
+    logger.error('❌ Error:', err);
   }
 
   // Mongoose bad ObjectId

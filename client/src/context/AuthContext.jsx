@@ -19,10 +19,9 @@ export const AuthProvider = ({ children }) => {
   // Check for existing session on mount
   useEffect(() => {
     const initAuth = async () => {
-      const token = localStorage.getItem('accessToken');
       const storedUser = localStorage.getItem('user');
 
-      if (token && storedUser) {
+      if (storedUser) {
         try {
           const { data } = await getMe();
           if (data.success) {
@@ -31,8 +30,6 @@ export const AuthProvider = ({ children }) => {
           }
         } catch (error) {
           // Token invalid/expired — clear storage
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
           localStorage.removeItem('user');
         }
       }
@@ -47,9 +44,7 @@ export const AuthProvider = ({ children }) => {
     const { data } = await loginApi({ email, password });
 
     if (data.success) {
-      const { user: userData, accessToken, refreshToken } = data.data;
-      localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('refreshToken', refreshToken);
+      const { user: userData } = data.data;
       localStorage.setItem('user', JSON.stringify(userData));
       setUser(userData);
       setIsAuthenticated(true);
@@ -61,15 +56,10 @@ export const AuthProvider = ({ children }) => {
 
   const logout = useCallback(async () => {
     try {
-      const refreshToken = localStorage.getItem('refreshToken');
-      if (refreshToken) {
-        await logoutApi(refreshToken);
-      }
+      await logoutApi();
     } catch (error) {
       // Ignore logout API errors
     } finally {
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
       localStorage.removeItem('user');
       setUser(null);
       setIsAuthenticated(false);
